@@ -13,7 +13,7 @@ get_rating_valid <- function(x, gold, raters, grouping_vars = c("id", "condition
     #create new columns and attach name to list
     col_name_new <- paste(rater,"reliability", sep="_")
     col_names <- c(col_names, col_name_new)
-    data <- add_reliability_column(data, gold, rater, other_raters, col_name_new)
+    data <- add_reliability_column(data, gold, rater, col_name_new, other_raters)
   }
   #check if gold has rated this set
   data <- add_gold_rated_column(data, gold)
@@ -33,6 +33,7 @@ get_rating_valid <- function(x, gold, raters, grouping_vars = c("id", "condition
 
 
 add_gold_rated_column <- function(data, goldName){
+  require(dplyr)
   dataWithGoldRatedColumn <- data %>%
     rowwise %>%
     mutate("gold_has_rated" = !is.na(!!as.name(goldName)))
@@ -40,19 +41,28 @@ add_gold_rated_column <- function(data, goldName){
 }
 
 
-add_reliability_column <- function(data, goldName, raterName, otherRaters, newColumnName){
+add_reliability_column <- function(data, goldName, raterName, newColumnName, ...){
+  require(dplyr)
+  otherRaters <- list(...)
+  newArgs <- lapply(otherRaters, as.name)
   dataWithNewColumns <- data %>% 
     rowwise %>% 
     mutate(!!newColumnName := 
-               ifelse(
-                 !is.na(!!as.name(goldName)),
-                 check_diff(!!as.name(goldName), !!as.name(raterName)),
-                 get_mean_of_diffs(!!as.name(raterName), !!as.name(otherRaters))
-               )
+             do.call(function(...) 
+               get_diff_to_gold_if_available(!!as.name(goldName),!!as.name(raterName),...), 
+               newArgs)
   )
   return(dataWithNewColumns)
 }
 
+
+
+get_diff_to_gold_if_available <- function(goldRating, rating, ...){
+  if(!is.na(goldRating)) 
+    return(check_diff(rating, goldRating))
+  else 
+    return(get_mean_of_diffs(rating, ...))
+}
 
 check_diff <- function(rating1, rating2){
   if (is.na(rating1) | is.na(rating2)){
@@ -67,10 +77,11 @@ check_diff <- function(rating1, rating2){
 }
 
 
-get_mean_of_diffs <- function(rating, other_ratings){
+get_mean_of_diffs <- function(rating, ...){
   diffs <- c()
-  for (i in 1:length(other_ratings)){
-    diffs <- c(diffs, check_diff(rating, other_ratings[i]))
+  other_ratings <- list(...)
+  for (otherRating in other_ratings){
+    diffs <- c(diffs, check_diff(rating, otherRating))
   }
   diffs <- diffs[!is.na(diffs)]
   result <- mean(diffs)
