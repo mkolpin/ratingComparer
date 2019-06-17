@@ -41,9 +41,8 @@ add_gold_rated_column <- function(data, goldName){
 }
 
 
-add_reliability_column <- function(data, goldName, raterName, newColumnName, ...){
+add_reliability_column <- function(data, goldName, raterName, newColumnName, otherRaters){
   require(dplyr)
-  otherRaters <- list(...)
   newArgs <- lapply(otherRaters, as.name)
   dataWithNewColumns <- data %>% 
     rowwise %>% 
@@ -58,10 +57,13 @@ add_reliability_column <- function(data, goldName, raterName, newColumnName, ...
 
 
 get_diff_to_gold_if_available <- function(goldRating, rating, ...){
-  if(!is.na(goldRating)) 
+  otherRaters <- list(...)
+  if(!is.na(goldRating)) {
     return(check_diff(rating, goldRating))
-  else 
-    return(get_mean_of_diffs(rating, ...))
+  }
+  else {
+    return(get_mean_of_diffs(rating, otherRaters))
+  }
 }
 
 check_diff <- function(rating1, rating2){
@@ -77,9 +79,9 @@ check_diff <- function(rating1, rating2){
 }
 
 
-get_mean_of_diffs <- function(rating, ...){
+get_mean_of_diffs <- function(rating, otherRaters){
   diffs <- c()
-  other_ratings <- list(...)
+  other_ratings <- otherRaters
   for (otherRating in other_ratings){
     diffs <- c(diffs, check_diff(rating, otherRating))
   }

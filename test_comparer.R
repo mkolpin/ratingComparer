@@ -11,8 +11,8 @@ test_that("test check_diff", {
 context("test get_mean_of_diffs")
 
 test_that("test get_mean_of_diffs", {
-  expect_equal(get_mean_of_diffs(1, 2, 2.5, 1,5), 50)
-  expect_equal(get_mean_of_diffs(1, 2, 1,5, NA, NA), 100*2/3)
+  expect_equal(get_mean_of_diffs(1, 2, 2.5, 1.5), 100*2/3)
+  expect_equal(get_mean_of_diffs(1, 2, 1.5, NA, NA), 100)
   expect_equal(get_mean_of_diffs(1, 2, NA), 100)
   expect_equal(get_mean_of_diffs(1.5, 2, 3), 50)
   expect_equal(get_mean_of_diffs(1, NA), NA)
